@@ -1,41 +1,63 @@
 import { useState, useRef, useCallback } from 'react'
 import { transcribeAudio } from '../api/client'
 
-/**
- * STT strategy:
- *   1. Try browser Web Speech API (free, no key needed) — Chrome/Edge only
- *   2. If not available, fall back to recording + Whisper via backend
- */
 export function useVoiceRecorder({ onTranscript, onError }) {
   const [isRecording, setIsRecording] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [liveTranscript, setLiveTranscript] = useState('')   // ← NEW: live interim text
+
   const mediaRecorderRef = useRef(null)
   const chunksRef = useRef([])
   const recognitionRef = useRef(null)
   const finalTranscriptRef = useRef('')
 
-  const hasSpeechRecognition = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window
+  const hasSpeechRecognition =
+    'webkitSpeechRecognition' in window || 'SpeechRecognition' in window
 
-  // ── Browser Web Speech API (free) ──────────────────
+  // ── Browser Web Speech API ─────────────────────────────────────────────────
   const startBrowserSTT = useCallback(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SR()
     recognition.continuous = true
-    recognition.interimResults = false
+    recognition.interimResults = true          // ← FIX: was false — now words show live
     recognition.lang = 'en-US'
+    recognition.maxAlternatives = 1
     finalTranscriptRef.current = ''
+    setLiveTranscript('')
 
     recognition.onresult = (e) => {
+      let interim = ''
+      let final = finalTranscriptRef.current
+
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) finalTranscriptRef.current += e.results[i].transcript + ' '
+        const text = e.results[i][0].transcript
+        if (e.results[i].isFinal) {
+          final += text + ' '
+        } else {
+          interim += text
+        }
       }
+
+      finalTranscriptRef.current = final
+      setLiveTranscript(final + interim)       // ← FIX: show running transcript in UI
     }
+
     recognition.onerror = (e) => {
-      onError?.('Speech recognition error: ' + e.error)
+      // ← FIX: surface errors to the user instead of silently failing
+      const msg =
+        e.error === 'not-allowed'
+          ? 'Microphone access denied — please allow microphone in browser settings'
+          : e.error === 'no-speech'
+            ? 'No speech detected — try speaking louder or closer to the mic'
+            : `Speech recognition error: ${e.error}`
+      onError?.(msg)
       setIsRecording(false)
+      setLiveTranscript('')
     }
+
     recognition.onend = () => {
       const transcript = finalTranscriptRef.current.trim()
+      setLiveTranscript('')
       if (transcript) onTranscript(transcript)
       setIsRecording(false)
     }
@@ -49,25 +71,42 @@ export function useVoiceRecorder({ onTranscript, onError }) {
     recognitionRef.current?.stop()
   }, [])
 
-  // ── MediaRecorder → Whisper fallback ───────────────
+  // ── MediaRecorder → Groq Whisper fallback ─────────────────────────────────
   const startWhisper = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
-      chunksRef.current = []
 
-      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      // ← FIX: detect supported mime type — Safari doesn't support audio/webm
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : MediaRecorder.isTypeSupported('audio/mp4')
+            ? 'audio/mp4'
+            : ''   // let browser choose
+
+      const options = mimeType ? { mimeType } : {}
+      const mediaRecorder = new MediaRecorder(stream, options)
+      chunksRef.current = []
+      setLiveTranscript('Recording… click stop when done')
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data)
+      }
+
       mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        stream.getTracks().forEach((t) => t.stop())
+        setLiveTranscript('Transcribing…')
+        const blob = new Blob(chunksRef.current, { type: mimeType || 'audio/webm' })
         setIsProcessing(true)
         try {
           const transcript = await transcribeAudio(blob)
           onTranscript(transcript)
         } catch (err) {
-          onError?.(err.message || 'Transcription failed')
+          onError?.(err.message || 'Transcription failed — check your GROQ_API_KEY')
         } finally {
           setIsProcessing(false)
+          setLiveTranscript('')
         }
       }
 
@@ -75,7 +114,11 @@ export function useVoiceRecorder({ onTranscript, onError }) {
       mediaRecorderRef.current = mediaRecorder
       setIsRecording(true)
     } catch (err) {
-      onError?.(err.message || 'Microphone access denied')
+      const msg =
+        err.name === 'NotAllowedError'
+          ? 'Microphone access denied — please allow microphone in browser settings'
+          : err.message || 'Microphone access failed'
+      onError?.(msg)
     }
   }, [onTranscript, onError])
 
@@ -86,7 +129,7 @@ export function useVoiceRecorder({ onTranscript, onError }) {
     }
   }, [])
 
-  // ── Public API ──────────────────────────────────────
+  // ── Public API ─────────────────────────────────────────────────────────────
   const toggleRecording = useCallback(() => {
     if (isRecording) {
       hasSpeechRecognition ? stopBrowserSTT() : stopWhisper()
@@ -95,5 +138,5 @@ export function useVoiceRecorder({ onTranscript, onError }) {
     }
   }, [isRecording, hasSpeechRecognition, startBrowserSTT, stopBrowserSTT, startWhisper, stopWhisper])
 
-  return { isRecording, isProcessing, toggleRecording }
+  return { isRecording, isProcessing, liveTranscript, toggleRecording }
 }

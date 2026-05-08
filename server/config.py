@@ -2,20 +2,20 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # LLM — Groq free tier (https://console.groq.com)
+    # LLM + STT — Groq free tier (https://console.groq.com)
     GROQ_API_KEY: str = ""
 
-    # Legacy — no longer used
-    GEMINI_API_KEY: str = ""
-    ANTHROPIC_API_KEY: str = ""
-    OPENAI_API_KEY: str = ""
-
-    # TTS — "edge" uses Microsoft Edge Neural TTS (free, natural-sounding)
-    #        "browser" uses browser SpeechSynthesis (free, robotic)
-    #        "openai" or "elevenlabs" require paid API keys
+    # TTS — "edge" = Microsoft Edge Neural TTS (free, natural quality, no key needed)
+    #        "browser" = browser SpeechSynthesis (free, robotic)
+    #        "openai" or "elevenlabs" = paid
     TTS_PROVIDER: str = "edge"
+
+    # Optional — only needed if TTS_PROVIDER=openai
+    OPENAI_API_KEY: str = ""
     OPENAI_TTS_VOICE: str = "nova"
     OPENAI_TTS_MODEL: str = "tts-1"
+
+    # Optional — only needed if TTS_PROVIDER=elevenlabs
     ELEVENLABS_API_KEY: str = ""
     ELEVENLABS_VOICE_ID: str = "EXAVITQu4vr4xnSDxMaL"
 

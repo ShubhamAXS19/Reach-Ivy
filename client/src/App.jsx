@@ -17,7 +17,7 @@ export default function App() {
   const [sessionStarted, setSessionStarted] = useState(false)
   const [showTour, setShowTour] = useState(false)
 
-  const { isRecording, isProcessing, toggleRecording } = useVoiceRecorder({
+  const { isRecording, isProcessing, liveTranscript, toggleRecording } = useVoiceRecorder({
     onTranscript: (t) => { if (t.trim()) sendMessage(t) },
     onError: (msg) => console.error('STT error:', msg),
   })
@@ -80,7 +80,6 @@ export default function App() {
           <button onClick={() => setShowTour(true)} className="text-[11px] text-text-muted border border-border-subtle px-2.5 py-1 rounded-full hover:bg-surface-raised transition-colors">
             ? Help
           </button>
-          <span className="text-[11px] bg-ivy-teal-lt text-ivy-teal border border-ivy-teal/20 px-2.5 py-1 rounded-full font-medium">gemini-2.0-flash</span>
           <span className="text-[11px] bg-ivy-purple-lt text-ivy-purple-dk px-2.5 py-1 rounded-full font-medium border border-ivy-purple-md/20">Essay Brainstormer · Beta</span>
         </div>
       </header>
@@ -111,12 +110,17 @@ export default function App() {
                   <div
                     id="tour-transcript"
                     className={`min-h-[36px] px-4 py-2 rounded-xl text-[13px] border flex items-center transition-colors
-                      ${isRecording
+    ${isRecording
                         ? 'bg-red-950/30 border-red-800/50 text-red-300'
                         : 'bg-surface-raised border-border-subtle text-text-muted'
                       }`}
                   >
-                    {isRecording ? 'Listening… speak now' : 'Spoken words appear here in real time…'}
+                    {/* ← FIX: was always a static string, now shows actual live speech */}
+                    {isRecording && liveTranscript
+                      ? liveTranscript
+                      : isRecording
+                        ? 'Listening… speak now'
+                        : 'Spoken words appear here in real time…'}
                   </div>
 
                   <div id="tour-textinput" className="flex gap-2">

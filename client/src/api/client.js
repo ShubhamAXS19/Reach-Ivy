@@ -1,6 +1,9 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '/api' })
+// const api = axios.create({ baseURL: '/api' })
+const api = axios.create({
+  baseURL: 'https://reach-ivy-qszq.onrender.com/api'
+})
 
 export async function sendChat(messages) {
   const { data } = await api.post('/chat', { messages })

@@ -1,12 +1,9 @@
 import re
 import json
-import google.generativeai as genai
+from groq import AsyncGroq
 
 from config import settings
 from models import Message, EssayStructure
-
-# Configure Gemini client
-genai.configure(api_key=settings.GEMINI_API_KEY)
 
 ESSAY_PROMPT = (
     '"How has your life experience contributed to your personal story — '
@@ -65,72 +62,29 @@ def parse_essay_structure(text: str) -> tuple[str, EssayStructure | None]:
         return clean_message, None
 
 
-async def _gemini_chat(messages: list[Message]) -> str:
-    """Call Gemini 2.0 Flash (free tier via Google AI Studio)."""
-    if not settings.GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY is not set in .env")
-
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        system_instruction=SYSTEM_PROMPT,
-    )
-
-    # Convert to Gemini format — all messages except the last go into history
-    gemini_history = []
-    for m in messages[:-1]:
-        gemini_history.append({
-            "role": "user" if m.role == "user" else "model",
-            "parts": [m.content],
-        })
-
-    chat = model.start_chat(history=gemini_history)
-    response = chat.send_message(messages[-1].content)
-    return response.text
-
-
-async def _claude_chat(messages: list[Message]) -> str:
-    """Optional fallback: Anthropic Claude Sonnet (only used if ANTHROPIC_API_KEY is set)."""
-    try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": m.role, "content": m.content} for m in messages],
-        )
-        return response.content[0].text
-    except ImportError:
-        raise ValueError("anthropic package not installed")
-
-
 async def get_chat_response(messages: list[Message]) -> tuple[str, EssayStructure | None]:
     """
-    Primary: Gemini 2.0 Flash (free tier — Google AI Studio key required).
-    Fallback: Claude Sonnet (only if ANTHROPIC_API_KEY is also set).
+    Uses Groq (free tier) with Llama 3.3 70B.
+    Sign up at https://console.groq.com — no credit card needed.
+    Free tier: 14,400 requests/day, available globally including India.
     """
-    raw_text = None
-
-    # ── Primary: Gemini (free) ──────────────────────────
-    if settings.GEMINI_API_KEY:
-        try:
-            raw_text = await _gemini_chat(messages)
-            print("✅ Used Gemini 2.0 Flash (free)")
-        except Exception as e:
-            print(f"⚠ Gemini failed ({e}), trying fallback...")
-
-    # ── Fallback: Claude (optional, paid) ──────────────
-    if raw_text is None and settings.ANTHROPIC_API_KEY:
-        try:
-            raw_text = await _claude_chat(messages)
-            print("✅ Used Claude (fallback)")
-        except Exception as e:
-            print(f"⚠ Claude fallback also failed: {e}")
-
-    if raw_text is None:
+    if not settings.GROQ_API_KEY:
         raise ValueError(
-            "No LLM available. Set GEMINI_API_KEY in .env "
-            "(free at https://aistudio.google.com/app/apikey)"
+            "GROQ_API_KEY not set. Get a free key at https://console.groq.com"
         )
 
+    client = AsyncGroq(api_key=settings.GROQ_API_KEY)
+
+    response = await client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            *[{"role": m.role, "content": m.content} for m in messages],
+        ],
+        max_tokens=1024,
+        temperature=0.7,
+    )
+
+    raw_text = response.choices[0].message.content
+    print("✅ Used Groq / Llama 3.3 70B (free)")
     return parse_essay_structure(raw_text)

@@ -2,17 +2,18 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # LLM — primary (free tier via Google AI Studio)
-    GEMINI_API_KEY: str = ""
-    # LLM — optional paid fallback
-    ANTHROPIC_API_KEY: str = ""
+    # LLM — Groq free tier (https://console.groq.com)
+    GROQ_API_KEY: str = ""
 
-    # STT — optional, browser Web Speech API is used by default (free, Chrome/Edge)
+    # Legacy — no longer used
+    GEMINI_API_KEY: str = ""
+    ANTHROPIC_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
 
-    # TTS — "browser" uses browser SpeechSynthesis (free, no key needed)
+    # TTS — "edge" uses Microsoft Edge Neural TTS (free, natural-sounding)
+    #        "browser" uses browser SpeechSynthesis (free, robotic)
     #        "openai" or "elevenlabs" require paid API keys
-    TTS_PROVIDER: str = "browser"
+    TTS_PROVIDER: str = "edge"
     OPENAI_TTS_VOICE: str = "nova"
     OPENAI_TTS_MODEL: str = "tts-1"
     ELEVENLABS_API_KEY: str = ""

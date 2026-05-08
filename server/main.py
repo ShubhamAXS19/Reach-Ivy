@@ -22,7 +22,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.get_cors_origins(),  # ← was settings.CORS_ORIGINS
+    allow_origins=[
+        "https://reach-ivy.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -107,7 +107,7 @@ cd server
 python3.10 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-./venv/bin/uvicorn main:app --reload --port 8000
+python -m uvicorn main:app --port 8000
 ```
 
 You should see:

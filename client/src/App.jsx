@@ -4,6 +4,7 @@ import ChatWindow from './components/ChatWindow'
 import VoiceButton from './components/VoiceButton'
 import EssayOutput from './components/EssayOutput'
 import OnboardingTour from './components/OnboardingTour'
+import LandingModal from "./components/LandingModal";
 import { useConversation } from './hooks/useConversation'
 import { useVoiceRecorder } from './hooks/useVoiceRecorder'
 
@@ -16,6 +17,7 @@ export default function App() {
   const [text, setText] = useState('')
   const [sessionStarted, setSessionStarted] = useState(false)
   const [showTour, setShowTour] = useState(false)
+  const [showLanding, setShowLanding] = useState(true) // ✅ keep this here
 
   const { isRecording, isProcessing, liveTranscript, toggleRecording } = useVoiceRecorder({
     onTranscript: (t) => { if (t.trim()) sendMessage(t) },
@@ -43,9 +45,12 @@ export default function App() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendText() }
   }
 
+  // ✅ FIXED: Modal now shows on the landing/welcome screen, not after session starts
   if (!sessionStarted) {
     return (
       <div className="min-h-screen bg-surface-base flex items-center justify-center px-4">
+        {showLanding && <LandingModal onDismiss={() => setShowLanding(false)} />}
+
         <div className="bg-surface-card rounded-3xl border border-border-subtle shadow-2xl p-10 max-w-md w-full text-center">
           <div className="text-5xl mb-4">🍀</div>
           <h1 className="font-serif text-3xl text-text-primary mb-2">HelloIvy</h1>
@@ -67,7 +72,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen bg-surface-base overflow-hidden">
-
+      {/* ✅ REMOVED: modal no longer renders here */}
       {showTour && <OnboardingTour onComplete={() => setShowTour(false)} />}
 
       {/* Topbar */}
@@ -115,7 +120,6 @@ export default function App() {
                         : 'bg-surface-raised border-border-subtle text-text-muted'
                       }`}
                   >
-                    {/* ← FIX: was always a static string, now shows actual live speech */}
                     {isRecording && liveTranscript
                       ? liveTranscript
                       : isRecording

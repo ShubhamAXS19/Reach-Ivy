@@ -2,7 +2,8 @@ import axios from 'axios'
 
 // const api = axios.create({ baseURL: '/api' })
 const api = axios.create({
-  baseURL: 'https://reach-ivy-qszq.onrender.com/api'
+  // baseURL: 'https://reach-ivy-qszq.onrender.com/api'
+  baseURL: import.meta.env.VITE_API_URL ?? '/api'
 })
 
 export async function sendChat(messages) {

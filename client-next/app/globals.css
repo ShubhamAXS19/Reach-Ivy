@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  /* Fonts */
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-serif: "DM Serif Display", Georgia, serif;
+
+  /* Brand colors (fixed) */
+  --color-ivy-purple: #7b6fd4;
+  --color-ivy-purple-md: #6459b8;
+  --color-ivy-purple-dk: #9d94e8;
+  --color-ivy-teal: #2ec4a0;
+
+  /* Theme colors (swapped by dark/light class) */
+  --color-surface-base: #0f1117;
+  --color-surface-card: #181b24;
+  --color-surface-raised: #1e2130;
+  --color-surface-hover: #252840;
+  --color-border-subtle: #2a2d3a;
+  --color-border-strong: #383b4d;
+  --color-text-primary: #e2e4e9;
+  --color-text-secondary: #9095a8;
+  --color-text-muted: #565b70;
+  --color-ivy-purple-lt: #2a2654;
+  --color-ivy-teal-lt: #1a3832;
+}
+
+/* Light mode overrides */
+html.light {
+  --color-surface-base: #f8fafc;
+  --color-surface-card: #ffffff;
+  --color-surface-raised: #f1f5f9;
+  --color-surface-hover: #e2e8f0;
+  --color-border-subtle: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+  --color-ivy-purple-lt: #ede9ff;
+  --color-ivy-teal-lt: #ccfbf1;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-surface-base);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #2a2d3a;
+    border-radius: 4px;
+  }
+}

@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
 import ChatWindow from "../components/ChatWindow";
 import VoiceButton from "../components/VoiceButton";
@@ -10,6 +12,15 @@ import { useConversation } from "../hooks/useConversation";
 import { useVoiceRecorder } from "../hooks/useVoiceRecorder";
 
 export default function App() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) router.push("/login");
+  }, [user, loading, router]);
+
+  // Show nothing while checking auth
+  if (loading || !user) return null;
   const {
     messages,
     essayStructure,

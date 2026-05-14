@@ -36,3 +36,5 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 uvicorn==0.46.0
 yarl==1.23.0
+djangorestframework==3.16.0
+djangorestframework-simplejwt==5.5.0

@@ -7,6 +7,7 @@ from services.llm import get_chat_response
 from services.stt import transcribe_audio
 from services.tts import synthesize_speech
 from config import settings
+from .auth_utils import jwt_required 
 
 
 @csrf_exempt

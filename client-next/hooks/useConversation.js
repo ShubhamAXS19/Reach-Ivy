@@ -38,6 +38,7 @@ function browserSpeak(text) {
 
 export function useConversation() {
     const [messages, setMessages] = useState([])
+    const [userCount, setUserCount] = useState(0)
     const apiHistoryRef = useRef([])
     const [essayStructure, setEssayStructure] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
@@ -46,19 +47,15 @@ export function useConversation() {
     const audioRef = useRef(null)
     const objectUrlRef = useRef(null)
 
-    const userCount = messages.filter(m => m.role === 'user').length
     const currentStage = getStageIndex(userCount)
 
     const playTTS = useCallback(async (text) => {
         setIsSpeaking(true)
         try {
             const result = await textToSpeech(text)
-
             if (result === null) {
-                // Backend is in browser mode — use Web Speech Synthesis
                 await browserSpeak(text)
             } else {
-                // Backend returned audio bytes — play MP3
                 if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
                 objectUrlRef.current = result
                 const audio = new Audio(result)
@@ -103,6 +100,7 @@ export function useConversation() {
         setMessages([])
         setEssayStructure(null)
         setError(null)
+        setUserCount(0)
         apiHistoryRef.current = []
         await callAPI([{ role: 'user', content: 'Hello! Please start the interview.' }], [])
     }, [callAPI, stopSpeaking])
@@ -115,6 +113,7 @@ export function useConversation() {
         const newDisplay = [...messages, newUserMsg]
         apiHistoryRef.current = newApiHistory
         setMessages(newDisplay)
+        setUserCount(c => c + 1)
         await callAPI(newApiHistory, newDisplay)
     }, [messages, isLoading, callAPI, stopSpeaking])
 

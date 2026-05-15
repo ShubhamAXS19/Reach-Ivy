@@ -66,7 +66,7 @@ api.interceptors.response.use(
         }
 
         try {
-            const { data } = await axios.post('/api/auth/token/refresh/', {
+            const { data } = await axios.post('/auth/token/refresh/', {
                 refresh: refreshToken,
             })
             tokenStorage.set(data.access, data.refresh)
@@ -144,4 +144,55 @@ export async function textToSpeech(text) {
     const response = await api.post('/tts', { text }, { responseType: 'blob' })
     if (response.status === 204) return null
     return URL.createObjectURL(response.data)
+}
+
+
+export async function getActiveConversation() {
+    try {
+        const { data } = await api.get('/auth/conversations/active/')
+        return data
+    } catch (error) {
+        if (error.response?.status === 404) {
+            return { has_active: false }
+        }
+        throw error
+    }
+}
+
+export async function syncConversation(conversationData) {
+    const { data } = await api.post('/auth/conversations/sync/', conversationData)
+    return data
+}
+
+export async function startNewConversation() {
+    const { data } = await api.post('/auth/conversations/new/')
+    return data
+}
+
+export async function resumeConversation(conversationId) {
+    const { data } = await api.post(`/auth/conversations/resume/${conversationId}/`)
+    return data
+}
+
+// ── Report API ────────────────────────────────────────────────────────────────
+export async function generateReport() {
+    const { data } = await api.post('/report/generate/')
+    return data
+}
+
+// Add to api/client.js
+
+export async function getPreviousConversations() {
+    const { data } = await api.get('/auth/conversations/previous/')
+    return data
+}
+
+export async function loadPreviousConversation(conversationId) {
+    const { data } = await api.post(`/auth/conversations/load/${conversationId}/`)
+    return data
+}
+
+export async function deleteConversation(conversationId) {
+    const { data } = await api.delete(`/auth/conversations/${conversationId}/`)
+    return data
 }

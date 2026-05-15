@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
+from .models import Conversation, ConversationMessage, UserReport
 
 User = get_user_model()
 
@@ -28,3 +29,35 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'is_email_verified']
         read_only_fields = fields
+
+
+class ConversationMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConversationMessage
+        fields = ['id', 'role', 'content', 'created_at']
+
+
+class UserReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserReport
+        fields = ['id', 'recommended_domain', 'domain_confidence', 'key_themes', 
+                  'strengths', 'suggested_majors', 'problem_solving_style', 
+                  'career_pathways', 'exploration_suggestions', 'summary_insight', 'created_at']
+
+
+class ConversationSerializer(serializers.ModelSerializer):
+    messages = ConversationMessageSerializer(many=True, read_only=True)
+    report = UserReportSerializer(read_only=True)  # Now UserReportSerializer is defined
+    
+    class Meta:
+        model = Conversation
+        fields = ['id', 'created_at', 'updated_at', 'is_active', 'essay_structure', 
+                  'current_stage', 'user_message_count', 'completed', 'messages', 'report']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class SyncConversationSerializer(serializers.Serializer):
+    messages = serializers.ListField(child=serializers.DictField(), required=True)
+    essay_structure = serializers.DictField(required=False, allow_null=True)
+    current_stage = serializers.IntegerField(min_value=0, max_value=4)
+    user_message_count = serializers.IntegerField(min_value=0)

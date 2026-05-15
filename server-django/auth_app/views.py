@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -10,7 +11,8 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .emails import send_password_reset_email, send_verification_email
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import RegisterSerializer, UserSerializer, ConversationSerializer, SyncConversationSerializer
+from .models import Conversation, ConversationMessage, UserReport
 
 User = get_user_model()
 
@@ -28,7 +30,6 @@ def register(request):
     try:
         send_verification_email(user)
     except Exception as e:
-        # Don't fail registration if email sending fails — log and continue
         print(f'[email] Failed to send verification email: {e}')
 
     return Response(
@@ -79,7 +80,6 @@ def logout(request):
         token = RefreshToken(refresh_token)
         token.blacklist()
     except TokenError:
-        # Token already invalid — treat as successful logout
         pass
     return Response({'message': 'Logged out successfully.'})
 
@@ -123,7 +123,6 @@ def forgot_password(request):
     if not email:
         return Response({'detail': 'Email is required.'}, status=400)
 
-    # Always return success to avoid leaking which emails are registered
     try:
         user = User.objects.get(email=email)
         token = default_token_generator.make_token(user)
@@ -161,3 +160,115 @@ def reset_password(request):
     user.set_password(password)
     user.save(update_fields=['password'])
     return Response({'message': 'Password reset successfully. You can now log in.'})
+
+
+# ── Conversation endpoints ────────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_active_conversation(request):
+    """Get the user's active (incomplete) conversation, if any"""
+    try:
+        conversation = Conversation.objects.get(user=request.user, is_active=True, completed=False)
+        serializer = ConversationSerializer(conversation)
+        return Response(serializer.data)
+    except Conversation.DoesNotExist:
+        return Response({'has_active': False}, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def sync_conversation(request):
+    """Save or update the active conversation"""
+    serializer = SyncConversationSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=400)
+
+    data = serializer.validated_data
+
+    conversation, created = Conversation.objects.get_or_create(
+        user=request.user,
+        is_active=True,
+        completed=False,
+        defaults={
+            'current_stage': data['current_stage'],
+            'user_message_count': data['user_message_count'],
+            'essay_structure': data.get('essay_structure'),
+        }
+    )
+
+    if not created:
+        conversation.current_stage = data['current_stage']
+        conversation.user_message_count = data['user_message_count']
+        conversation.essay_structure = data.get('essay_structure')
+        conversation.updated_at = timezone.now()
+        conversation.save()
+
+    conversation.messages.all().delete()
+
+    for msg in data['messages']:
+        ConversationMessage.objects.create(
+            conversation=conversation,
+            role=msg['role'],
+            content=msg['content']
+        )
+
+    return Response({'id': conversation.id, 'saved': True}, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def start_new_conversation(request):
+    """Archive current active conversation and start a fresh one"""
+    Conversation.objects.filter(user=request.user, is_active=True, completed=False).update(is_active=False)
+    return Response({'message': 'New conversation started'}, status=200)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def resume_conversation(request, conversation_id):
+    """Resume a specific archived conversation"""
+    try:
+        conversation = Conversation.objects.get(id=conversation_id, user=request.user, completed=False)
+        Conversation.objects.filter(user=request.user, is_active=True, completed=False).update(is_active=False)
+        conversation.is_active = True
+        conversation.save()
+        serializer = ConversationSerializer(conversation)
+        return Response(serializer.data)
+    except Conversation.DoesNotExist:
+        return Response({'detail': 'Conversation not found'}, status=404)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_previous_conversations(request):
+    conversations = Conversation.objects.filter(
+        user=request.user,
+        completed=True,
+        essay_structure__isnull=False
+    ).order_by('-created_at')
+
+    serializer = ConversationSerializer(conversations, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def load_previous_conversation(request, conversation_id):
+    """Load a previous conversation (view-only mode)"""
+    try:
+        conversation = Conversation.objects.get(id=conversation_id, user=request.user, completed=True)
+        serializer = ConversationSerializer(conversation)
+        return Response(serializer.data)
+    except Conversation.DoesNotExist:
+        return Response({'detail': 'Conversation not found'}, status=404)
+    
+    
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_conversation(request, conversation_id):
+    try:
+        conversation = Conversation.objects.get(id=conversation_id, user=request.user)
+        conversation.delete()
+        return Response({'message': 'Conversation deleted'}, status=200)
+    except Conversation.DoesNotExist:
+        return Response({'detail': 'Conversation not found'}, status=404)

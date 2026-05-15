@@ -11,6 +11,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.sessions',
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
@@ -24,6 +25,8 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',   
+    'django.contrib.auth.middleware.AuthenticationMiddleware', 
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -79,3 +82,6 @@ DEFAULT_FROM_EMAIL = 'HelloIvy <vishshubham35@gmail.com>'
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+STATIC_URL = '/static/'

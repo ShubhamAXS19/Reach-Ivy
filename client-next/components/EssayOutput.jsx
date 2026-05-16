@@ -35,7 +35,6 @@ export default function EssayOutput({ structure, onRestart }) {
                         <div key={key} className="rounded-2xl border border-border-subtle p-4 hover:-translate-y-0.5 transition-transform" style={{ background: '#181B24', animationDelay: `${i * 0.06}s`, animation: 'fadeUp 0.4s ease both' }}>
                             <div className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color }}>{label}</div>
                             <div className="text-[14px] font-medium text-text-primary mb-1 leading-snug">{sec.title}</div>
-                            <div className="text-[12px] font-semibold mb-2 inline-block px-2 py-0.5 rounded-full" style={{ color, background: bg }}>{sec.words} words</div>
                             <div className="text-[12px] text-text-secondary leading-relaxed">{sec.notes}</div>
                         </div>
                     )
@@ -44,11 +43,11 @@ export default function EssayOutput({ structure, onRestart }) {
 
             <div className="bg-ivy-purple-lt rounded-2xl p-5 flex items-center justify-between flex-wrap gap-4 border border-ivy-purple-md/20">
                 <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-widest text-ivy-purple-dk mb-1">Total word budget</div>
-                    <div className="font-serif text-4xl text-ivy-purple-dk">{total} <span className="text-2xl opacity-50">/ 350</span></div>
+                    <div className="text-[10px] font-semibold uppercase tracking-widest text-ivy-purple-dk mb-1">You're ready to write</div>
+                    <div className="font-serif text-2xl text-ivy-purple-dk">6 sections · 350 words</div>
                 </div>
                 <p className="text-[13px] text-ivy-purple-dk leading-relaxed max-w-xs">
-                    Your essay is structured across 6 sections, each grounded in <em>your</em> specific story. Word counts are guides — adjust freely as you draft.
+                    Each section is grounded in <em>your</em> specific story. Write in your own voice — use these as a guide, not a script.
                 </p>
             </div>
         </div>

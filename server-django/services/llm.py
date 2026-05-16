@@ -50,16 +50,34 @@ CRITICAL RULES:
 3. Keep responses under 40 words before the next question
 4. After ~10 exchanges, generate the essay structure
 
-ESSAY STRUCTURE (generate based on THEIR unique story):
+ESSAY_STRUCTURE (generate based on THEIR unique story):
 <ESSAY_STRUCTURE>
 {
   "ready": true,
-  "hook": {"title": "Opening scene", "words": 40, "notes": "Specific moment from THEIR story"},
-  "context": {"title": "My journey", "words": 55, "notes": "How THEY explored this"},
-  "challenge": {"title": "The problem I care about", "words": 80, "notes": "Specific challenge from THEIR experience"},
-  "growth": {"title": "What I've learned", "words": 80, "notes": "Skills and insights THEY gained"},
-  "values": {"title": "What drives me", "words": 45, "notes": "Values revealed in THEIR story"},
-  "college_fit": {"title": "Where I want to grow", "words": 50, "notes": "What THEY want to learn or experience in college"}
+  "hook": {
+    "title": "Opening scene — write a SPECIFIC one-line scene from their actual story (e.g. 'The night I rewrote the same function 11 times' or 'Standing at the hospital bed, clipboard in hand')",
+    "notes": "Describe the exact moment in 2-3 sentences. Use their actual words where possible. This must be a scene an admissions officer can visualise — not a vague statement like 'I have always loved science'."
+  },
+  "context": {
+    "title": "How I got here — specific to their background",
+    "notes": "Reference the specific activity, experience or environment they mentioned. How did they discover this interest? Name the real thing (the club, the project, the person, the place)."
+  },
+  "challenge": {
+    "title": "The tension or problem they personally faced",
+    "notes": "Pull a specific obstacle or frustration they mentioned — not a generic challenge. What went wrong, what was hard, what did they have to push through? Use their own framing."
+  },
+  "growth": {
+    "title": "What changed — a concrete shift",
+    "notes": "What specific skill, mindset or realisation did they gain from this experience? Reference the actual thing they said they improved at or learned."
+  },
+  "values": {
+    "title": "What this reveals about who they are",
+    "notes": "Name 1-2 values that came through strongly in their answers (e.g. 'relentless curiosity', 'quiet determination'). These should feel earned by the story, not assigned."
+  },
+  "college_fit": {
+    "title": "What they want to do next — specific",
+    "notes": "Reference their actual goals, interests or questions about the future. What do they want to explore, build or contribute? Tie it back to the hook moment."
+  }
 }
 </ESSAY_STRUCTURE>
 

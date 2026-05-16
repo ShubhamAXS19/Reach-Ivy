@@ -39,7 +39,7 @@ export default function PreviousEssays({ onLoadEssay, currentConversationId, ref
             >
                 <span className="text-lg">📚</span>
                 <span className="text-sm font-medium text-text-primary hidden sm:inline">
-                    Previous Essays
+                    {/* Previous Essays */}
                 </span>
                 <span className="text-xs text-ivy-purple-dk bg-ivy-purple-lt px-2 py-0.5 rounded-full">
                     {conversations.length}

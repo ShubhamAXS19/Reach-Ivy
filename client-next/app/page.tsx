@@ -272,6 +272,7 @@ export default function App() {
         <ReportModal
           report={reportData}
           messages={messages}
+          essayStructure={essayStructure}
           onClose={handleReportClose}
         />
       )}
@@ -476,11 +477,11 @@ export default function App() {
         </div>
       </div>
 
-      <PreviousEssays
+      {/* <PreviousEssays
         onLoadEssay={handleLoadPreviousEssay}
         currentConversationId={conversationId}
         refreshTrigger={refreshEssays}
-      />
+      /> */}
     </div>
   );
 }

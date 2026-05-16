@@ -13,7 +13,7 @@ class ChatRequest(BaseModel):
 
 class EssaySection(BaseModel):
     title: str
-    words: int
+    words: int=0
     notes: str
 
 

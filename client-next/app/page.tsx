@@ -12,7 +12,7 @@ import LandingModal from "../components/LandingModal";
 import ResumeModal from "../components/ResumeModal";
 import ReportModal from "../components/ReportModal";
 import SavePromptModal from "../components/SavePromptModal";
-import PreviousEssays from "../components/PreviousEssays";
+// import PreviousEssays from "../components/PreviousEssays";
 import { useConversation } from "../hooks/useConversation";
 import { useVoiceRecorder } from "../hooks/useVoiceRecorder";
 import { generateReport, deleteConversation } from "../api/client";
